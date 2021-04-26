@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-// Collection is a protocol Array + Set implements
+
 extension Collection where Element: Identifiable {
     func firstIndex(matching element: Element) -> Self.Index? {
         firstIndex(where: { $0.id == element.id })
@@ -21,13 +21,13 @@ extension Collection where Element: Identifiable {
 }
 
 extension Data {
-
+    // just a simple converter from a Data to a String
     var utf8: String? { String(data: self, encoding: .utf8 ) }
 }
 
 extension URL {
     var imageURL: URL {
-        
+        // check to see if there is an embedded imgurl reference
         for query in query?.components(separatedBy: "&") ?? [] {
             let queryComponents = query.components(separatedBy: "=")
             if queryComponents.count == 2 {
@@ -36,7 +36,7 @@ extension URL {
                 }
             }
         }
-       
+      
         if isFileURL {
             var url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             url = url?.appendingPathComponent(self.lastPathComponent)
@@ -49,12 +49,13 @@ extension URL {
 }
 
 extension GeometryProxy {
-
+    // converts from some other coordinate space to the proxy's own
     func convert(_ point: CGPoint, from coordinateSpace: CoordinateSpace) -> CGPoint {
         let frame = self.frame(in: coordinateSpace)
         return CGPoint(x: point.x-frame.origin.x, y: point.y-frame.origin.y)
     }
 }
+
 
 
 extension Array where Element == NSItemProvider {
@@ -93,7 +94,8 @@ extension Array where Element == NSItemProvider {
 }
 
 extension String {
-   
+    // returns ourself without any duplicate Characters
+    // not very efficient, so only for use on small-ish Strings
     func uniqued() -> String {
         var uniqued = ""
         for ch in self {
@@ -105,7 +107,7 @@ extension String {
     }
 }
 
-
+// it cleans up our code to be able to do more "math" on points and sizes
 
 extension CGPoint {
     static func -(lhs: Self, rhs: Self) -> CGSize {
@@ -142,7 +144,8 @@ extension CGSize {
 
 extension String
 {
-    
+    // returns ourself but with numbers appended to the end
+    // if necessary to make ourself unique with respect to those other Strings
     func uniqued<StringCollection>(withRespectTo otherStrings: StringCollection) -> String
         where StringCollection: Collection, StringCollection.Element == String {
         var unique = self
@@ -152,7 +155,9 @@ extension String
         return unique
     }
     
-   
+    // if a number is at the end of this String
+    // this increments that number
+    // otherwise, it appends the number 1
     var incremented: String  {
         let prefix = String(self.reversed().drop(while: { $0.isNumber }).reversed())
         if let number = Int(self.dropFirst(prefix.count)) {
@@ -164,7 +169,22 @@ extension String
 }
 
 extension UIImage {
-   
+    // Lecture 14 support
+    // stores ourself as jpeg in a file in the filesystem
+    // in the Application Support directory in our sandbox
+    // with the given name (or a unique name if no name provided)
+    // and returns the URL to it
+    // care must be taken if you hold on to a URL like this persistently
+    // because your Application Support directory's URL
+    // can change between instances of your application
+    // (see some hackery in imageURL above to account for this)
+    // if you wanted to hold on to a URL like this in the real world
+    // (i.e. not in demo-ware)
+    // you'd probably just hold onto the end part of the URL
+    // (i.e. not including the Application Support directory's URL)
+    // and then always prepend Application Support's URL upon use of the URL fragment
+    // this function might also want to add a parameter for the compression quality
+    // (currently it is best-quality compression)
     func storeInFilesystem(name: String = "\(Date().timeIntervalSince1970)") -> URL? {
         var url = try? FileManager.default.url(
             for: .applicationSupportDirectory,
